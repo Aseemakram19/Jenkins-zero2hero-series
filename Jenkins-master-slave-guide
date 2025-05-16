@@ -1,0 +1,85 @@
+To set up a Jenkins worker node (agent) on an EC2 Ubuntu instance and connect it to your Jenkins master using the SSH method,
+
+✅ Part 1: Launch and Prepare the Worker EC2 Instance
+1. Launch Ubuntu EC2 Instance (Worker Node)
+Choose Ubuntu 22.04 LTS
+
+Ensure it’s in the same VPC or has connectivity to Jenkins master.
+
+Assign a key pair and open port 22 (SSH) in the Security Group.
+
+✅ Part 2: Install Java on the Worker Node
+SSH into the worker EC2 instance:
+
+ssh -i "your-key.pem" ubuntu@<worker-public-ip>
+Install Java (required by Jenkins agent):
+FOLLOW OFFICAL GUIDE
+https://www.jenkins.io/doc/book/installing/linux/#debianubuntu 
+
+🔧 Step-by-Step: Add Jenkins Node via SSH
+Step 1: Generate SSH Key on Jenkins Master (if not done)
+
+ssh-keygen -t rsa
+This generates keys in ~/.ssh/id_rsa and ~/.ssh/id_rsa.pub
+
+Step 2: Copy Public Key to Agent Node
+manually append the public key to:
+
+
+
+✅ Prerequisites:
+Jenkins master is up and running.
+
+SSH is enabled on the agent machine.
+
+Java is installed on the agent.
+
+SSH key-based or password-based authentication is set up between master and agent.
+
+
+
+Step 3: On Jenkins Dashboard (Master)
+Go to Manage Jenkins > Manage Nodes and Clouds.
+
+Click on New Node.
+
+Give it a name (e.g., agent-cloudaseem), select Permanent Agent, click OK.
+
+Step 4: Configure Node Details
+Field	Value
+Remote root directory	/home/ubuntu or any path where Jenkins agent will run
+Labels	build-node, linux, etc. (useful for targeting specific agents)
+
+Usage	Choose whether Jenkins uses this node freely or only for labeled jobs
+
+Launch Method	Launch agents via SSH
+
+Host	IP address or hostname of the agent machine
+
+Credentials	Add new credentials (Username + Private Key or Password)
+
+Step 5: Add SSH Credentials (if needed)
+Click Add next to "Credentials"
+
+Choose:
+
+Kind: SSH Username with private key
+
+Username: jenkins (or whatever user is set up)
+
+Private Key: Use the direct input option and paste contents of ~/.ssh/id_rsa from master
+
+Step 6: Save and Launch
+Click Save
+
+Jenkins will try to connect via SSH
+
+Once connected, it will download the agent JAR and start the agent service
+
+✅ Verify
+Go to Nodes section
+
+Status should show "Online"
+
+Try running a job on that node to verify execution
+
