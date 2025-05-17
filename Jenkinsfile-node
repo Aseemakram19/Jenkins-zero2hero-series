@@ -1,0 +1,21 @@
+pipeline {
+    agent {label "workernode1" }
+
+    stages {
+        stage('stage-1') {
+            steps {
+                echo 'Welcome to Jenkins series, by Aseem DevOps'
+            }
+        }
+        stage('stage-2') {
+            steps {
+                sh 'mkdir cloudaseem10'
+            }
+        }
+        stage('stage-3') {
+            steps {
+                sh 'mkdir linux10'
+            }
+        }
+    }
+}
