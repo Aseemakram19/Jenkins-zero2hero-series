@@ -1,0 +1,84 @@
+Create a Gmail SMTP App Password
+
+An App Password is a 16-character password that allows third-party applications (like Jenkins) to send emails using Gmail SMTP securely.
+
+Step 1: Enable 2-Step Verification
+Before generating an App Password, you must enable 2-Step Verification in your Google Account.
+1.	Go to Google Account Security:
+Google My Account
+2.	Scroll to "Signing in to Google".
+3.	Click "2-Step Verification" → Click "Get Started".
+4.	Follow the steps to set up 2-Step Verification (via SMS or Authenticator App).
+________________________________________
+Step 2: Generate an App Password
+1.	Go to App Passwords Page:
+Google App Passwords
+2.	Sign in with your Google Account.
+3.	Under "Select app", choose "Mail".
+4.	Under "Select device", choose "Other (Custom Name)" and enter "Jenkins SMTP".
+5.	Click "Generate".
+6.	Copy the 16-character App Password (e.g., abcd efgh ijkl mnop).
+
+Add credentials as Username and password in jenkins
+7.	 
+________________________________________
+Step 3: Configure Gmail SMTP in Jenkins
+1.	Go to Jenkins Dashboard → Manage Jenkins → Configure System.
+2.	Scroll to "E-mail Notification".
+3.	Set the following: 
+o	SMTP Server: smtp.gmail.com
+o	Use SMTP Authentication: ✅ Checked
+o	User Name: Your Gmail ID (your-email@gmail.com)
+o	Password: Paste the App Password
+o	SMTP Port: 587
+o	Use TLS: ✅ Checked
+4.	Click Save.
+
+
+Email Extension Plugin
+
+
+1. Basic Email Notification
+SMTP Server: smtp.gmail.com
+Email Suffix: @gmail.com (default user email domain)
+SMTP Authentication: Enabled
+Username: Your Gmail address
+Password: Your Gmail password or App Password (for 2-factor authentication)
+Use TLS: Checked
+SMTP Port: 587
+Reply-To Address: Your email address
+Charset: UTF-8
+ 
+
+2. Extended Email Notification
+SMTP Server: smtp.gmail.com
+SMTP Port: 465 (for tls)
+Use SSL: Checked
+Credentials: Select from the
+ 
+post {
+    always {
+        script {
+            def buildStatus = currentBuild.currentResult
+            def buildUser = currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')[0]?.userId ?: 'Github User'
+            
+            emailext (
+                subject: "Pipeline ${buildStatus}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                    <p>This is a Jenkins amazon-prime-video CICD pipeline status.</p>
+                    <p>Project: ${env.JOB_NAME}</p>
+                    <p>Build Number: ${env.BUILD_NUMBER}</p>
+                    <p>Build Status: ${buildStatus}</p>
+                    <p>Started by: ${buildUser}</p>
+                    <p>Build URL: <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                """,
+                to: 'mohdaseemakram19@gmail.com',
+                from: 'mohdaseemakram19@gmail.com',
+                replyTo: 'mohdaseemakram19@gmail.com',
+                mimeType: 'text/html',
+                attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
+            )
+           }
+       }
+
+    }
