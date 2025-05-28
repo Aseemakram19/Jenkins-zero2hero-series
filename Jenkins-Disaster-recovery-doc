@@ -1,0 +1,111 @@
+**Jenkins Disaster Recovery (DR) Strategies and Implementation Guide**
+
+---
+
+### Overview
+
+This document outlines essential Disaster Recovery (DR) strategies for Jenkins, ensuring minimal downtime and data loss in the event of failure. The three main methods covered include:
+
+1. Automated EBS Volume Backups
+2. AMI Backups of Jenkins Server
+3. Jenkins Directory Backup to S3 Bucket and Restore Procedures
+
+---
+
+### 1. Automated EBS Volume Backups
+
+**Objective:** Capture point-in-time snapshots of the Jenkins data volume.
+
+**Approach:**
+
+* Identify the EBS volume attached to the Jenkins EC2 instance.
+* Use AWS Backup or a Lambda + CloudWatch Events combination to schedule regular snapshots.
+
+**Sample Lambda Strategy:**
+
+* Trigger: CloudWatch Event (Daily/Weekly)
+* Function: Create snapshot using the `create-snapshot` API
+* Tag snapshots for retention policies
+
+**Benefits:**
+
+* Quick volume-level restore
+* Minimal configuration required
+
+---
+
+### 2. AMI Backup of Jenkins Server
+
+**Objective:** Backup the complete Jenkins EC2 instance (OS + Jenkins config + installed tools).
+
+**Steps:**
+
+1. Navigate to EC2 Dashboard > Instances
+2. Select Jenkins instance > Actions > Create Image (AMI)
+3. Provide image name and description
+4. Schedule AMI creation using Lambda + CloudWatch if needed
+
+**Best Practices:**
+
+* Tag AMIs with creation date and retention period
+* Combine with EBS backup for complete DR coverage
+
+**Use Case:**
+
+* Fast recovery by launching new instance from AMI
+
+---
+
+### 3. Jenkins Directory Backup to S3 Bucket
+
+**Objective:** Backup Jenkins configurations, jobs, and plugin data stored in `/var/lib/jenkins`
+
+**Script Example:**
+
+```bash
+#!/bin/bash
+TIMESTAMP=$(date +%F-%H-%M)
+BACKUP_DIR="/var/lib/jenkins"
+S3_BUCKET="s3://your-jenkins-backup-bucket"
+
+tar -czf /tmp/jenkins-backup-$TIMESTAMP.tar.gz $BACKUP_DIR
+aws s3 cp /tmp/jenkins-backup-$TIMESTAMP.tar.gz $S3_BUCKET/
+rm -f /tmp/jenkins-backup-$TIMESTAMP.tar.gz
+```
+
+**Automation:**
+
+* Set a cron job (e.g., daily at midnight)
+* Ensure IAM role has `s3:PutObject` permission
+
+**Restore Procedure:**
+
+```bash
+aws s3 cp s3://your-jenkins-backup-bucket/jenkins-backup-<timestamp>.tar.gz .
+sudo systemctl stop jenkins
+sudo tar -xzf jenkins-backup-<timestamp>.tar.gz -C /
+sudo systemctl start jenkins
+```
+
+**Note:** Always verify permission and ownership settings after restore.
+
+---
+
+### Summary
+
+| Method              | Scope                 | Tools             | Frequency    | Recovery Time |
+| ------------------- | --------------------- | ----------------- | ------------ | ------------- |
+| EBS Snapshot        | Data Volume           | AWS Backup/Lambda | Daily/Weekly | Moderate      |
+| AMI Backup          | Full EC2 Instance     | EC2, Lambda       | Weekly       | Fast          |
+| S3 Directory Backup | Jenkins Configuration | Cron, AWS CLI     | Daily        | Fast          |
+
+---
+
+**Recommendation:** Implement at least 2 of the 3 methods to ensure a robust Jenkins DR plan. Regularly test your restore procedures to validate recovery capability.
+
+---
+
+**Author:** Mohammed Aseem Akram
+**Channel:** CloudAseem
+
+---
